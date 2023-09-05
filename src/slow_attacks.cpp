@@ -1,8 +1,7 @@
 #include "slow_attacks.h"
 
 Bitboard
-Slow_Attacks::slow_pawn_attacks (const bool side,
-                                 const unsigned int square) const
+Slow_Attacks::slow_pawn_attacks (const bool side, const unsigned int square) const
 {
   Bitboard attacks{ 0 }, temp{ 0 };
   temp.set_bit (square);
@@ -60,10 +59,9 @@ Slow_Attacks::slow_king_attacks (const unsigned int square) const
 }
 
 Bitboard
-Slow_Attacks::slow_rook_attacks (const Bitboard blockers,
-                                 const unsigned int square) const
+Slow_Attacks::slow_rook_attacks (const Bitboard blockers, const unsigned int square) const
 {
-  Bitboard attack{ 0 };
+  Bitboard attacks{ 0 };
 
   const int rank = square / 8;
   const int file = square % 8;
@@ -71,7 +69,7 @@ Slow_Attacks::slow_rook_attacks (const Bitboard blockers,
   for (int r = rank + 1, f = file; r <= 7; ++r)
     {
       Bitboard bitboard = 1_uint64 << (r * 8 + f);
-      attack |= bitboard;
+      attacks |= bitboard;
       if (bitboard & blockers)
         break;
     }
@@ -79,7 +77,7 @@ Slow_Attacks::slow_rook_attacks (const Bitboard blockers,
   for (int r = rank - 1, f = file; r >= 0; --r)
     {
       Bitboard bitboard = 1_uint64 << (r * 8 + f);
-      attack |= bitboard;
+      attacks |= bitboard;
       if (bitboard & blockers)
         break;
     }
@@ -87,7 +85,7 @@ Slow_Attacks::slow_rook_attacks (const Bitboard blockers,
   for (int r = rank, f = file + 1; f <= 7; ++f)
     {
       Bitboard bitboard = 1_uint64 << (r * 8 + f);
-      attack |= bitboard;
+      attacks |= bitboard;
       if (bitboard & blockers)
         break;
     }
@@ -95,19 +93,18 @@ Slow_Attacks::slow_rook_attacks (const Bitboard blockers,
   for (int r = rank, f = file - 1; f >= 0; --f)
     {
       Bitboard bitboard = 1_uint64 << (r * 8 + f);
-      attack |= bitboard;
+      attacks |= bitboard;
       if (bitboard & blockers)
         break;
     }
 
-  return attack;
+  return attacks;
 }
 
 Bitboard
-Slow_Attacks::slow_bishop_attacks (const Bitboard blockers,
-                                   const unsigned int square) const
+Slow_Attacks::slow_bishop_attacks (const Bitboard blockers, const unsigned int square) const
 {
-  Bitboard attack{ 0 };
+  Bitboard attacks{ 0 };
 
   const int rank = square / 8;
   const int file = square % 8;
@@ -115,7 +112,7 @@ Slow_Attacks::slow_bishop_attacks (const Bitboard blockers,
   for (int r = rank + 1, f = file + 1; r <= 7 && f <= 7; ++r, ++f)
     {
       Bitboard bitboard = 1_uint64 << (r * 8 + f);
-      attack |= bitboard;
+      attacks |= bitboard;
       if (bitboard & blockers)
         break;
     }
@@ -123,7 +120,7 @@ Slow_Attacks::slow_bishop_attacks (const Bitboard blockers,
   for (int r = rank + 1, f = file - 1; r <= 7 && f >= 0; ++r, --f)
     {
       Bitboard bitboard = 1_uint64 << (r * 8 + f);
-      attack |= bitboard;
+      attacks |= bitboard;
       if (bitboard & blockers)
         break;
     }
@@ -131,7 +128,7 @@ Slow_Attacks::slow_bishop_attacks (const Bitboard blockers,
   for (int r = rank - 1, f = file + 1; r >= 0 && f <= 7; --r, ++f)
     {
       Bitboard bitboard = 1_uint64 << (r * 8 + f);
-      attack |= bitboard;
+      attacks |= bitboard;
       if (bitboard & blockers)
         break;
     }
@@ -139,10 +136,10 @@ Slow_Attacks::slow_bishop_attacks (const Bitboard blockers,
   for (int r = rank - 1, f = file - 1; r >= 0 && f >= 0; --r, --f)
     {
       Bitboard bitboard = 1_uint64 << (r * 8 + f);
-      attack |= bitboard;
+      attacks |= bitboard;
       if (bitboard & blockers)
         break;
     }
 
-  return attack;
+  return attacks;
 }

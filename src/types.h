@@ -8,10 +8,7 @@
 #include <cstdint>
 
 // user defined literal for std::uint64_t type
-constexpr std::uint64_t operator"" _uint64 (unsigned long long arg)
-{
-  return static_cast<std::uint64_t> (arg);
-}
+constexpr std::uint64_t operator"" _uint64 (unsigned long long arg) { return static_cast<std::uint64_t> (arg); }
 
 // some constants
 constexpr uint64_t not_a_file_mask{ 18374403900871474942_uint64 };
