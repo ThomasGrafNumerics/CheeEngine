@@ -1,13 +1,18 @@
 #include "bitboard.h"
+#include "magics.h"
 #include "types.h"
 #include <iostream>
 
 int
 main ()
 {
-  Bitboard a{ not_a_file_mask };
+  Bitboard a;
   a.print_bitboard ();
-  std::cout << a.get_number_of_set_bits () << std::endl;
+  Magics m{ 0 };
+  Bitboard b = m.bishop_potential_blockers (0);
+  b.print_bitboard ();
+  Bitboard c = m.give_kth_blocker_configuration (b, 11);
+  c.print_bitboard ();
 
   return 0;
 }
