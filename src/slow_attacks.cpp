@@ -6,7 +6,7 @@ Slow_Attacks::slow_pawn_attacks (const bool side, const unsigned int square) con
   Bitboard attacks{ 0 }, temp{ 0 };
   temp.set_bit (square);
 
-  if (side == 0)
+  if (side == Chess::white)
     {
       attacks |= ((temp >> 7) & not_a_file_mask);
       attacks |= ((temp >> 9) & not_h_file_mask);

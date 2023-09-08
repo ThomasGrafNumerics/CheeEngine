@@ -58,3 +58,9 @@ Attacks::bishop_attacks (const Bitboard occupancy, const unsigned int square) co
 
   return magics.precomputed_bishop_attacks_hash_table[square][magic_index];
 }
+
+Bitboard
+Attacks::queen_attacks (const Bitboard occupancy, const unsigned int square) const
+{
+  return rook_attacks (occupancy, square) | bishop_attacks (occupancy, square);
+}

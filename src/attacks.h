@@ -4,7 +4,6 @@
 #include "magics.h"
 #include "slow_attacks.h"
 #include "types.h"
-#include <cstdint>
 
 class Attacks
 {

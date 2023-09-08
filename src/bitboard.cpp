@@ -30,7 +30,7 @@ Bitboard::print_bitboard (void) const
   std::cout << "\n\n";
   for (unsigned int rank = 0; rank < 8; ++rank)
     {
-      std::cout << (8 - rank) << " ";
+      std::cout << (8 - rank) << "|  ";
       for (unsigned int file = 0; file < 8; ++file)
         {
           unsigned int square = rank * 8 + file;
@@ -38,7 +38,9 @@ Bitboard::print_bitboard (void) const
         }
       std::cout << "\n";
     }
-  std::cout << "  a  b  c  d  e  f  g  h"
+  std::cout << "    _  _  _  _  _  _  _  _"
+            << "\n";
+  std::cout << "    a  b  c  d  e  f  g  h"
             << "\n\n";
   std::cout << "binary: " << std::bitset<64> (bitboard) << "\n";
   std::cout << "decimal: " << bitboard << "\n\n\n";
