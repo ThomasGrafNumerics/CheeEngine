@@ -21,7 +21,7 @@ public:
   unsigned int enpassant_square;
   unsigned int fifty_moves;
   uint64_t position_key;
-  void clearBoardstate (void);
+  void clear_boardstate (void);
 
 private:
 };

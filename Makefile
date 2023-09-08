@@ -12,7 +12,7 @@ CXX := g++
 CXXFLAGS := -Wall -Wextra -pedantic -std=c++17
 
 # target we wish to build with this makefile
-TARGET_EXEC := chess_engine
+TARGET_EXEC := engine
 
 # Extra flags to give to compilers when they are supposed to invoke the linker
 LDFLAGS :=

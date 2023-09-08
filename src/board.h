@@ -19,10 +19,11 @@ public:
 
   Attacks attacks;
   Boardstate boardstate;
+  unsigned int visited_nodes;
 
   void print_board (void) const;
   void parseFEN (const std::string &);
-  bool is_square_attacked (const unsigned int, const unsigned int) const;
+  bool is_square_attacked (const bool, const unsigned int) const;
   bool is_king_attacked (void) const;
 
 private:

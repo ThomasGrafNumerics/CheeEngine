@@ -33,7 +33,7 @@ Bitboard::print_bitboard (void) const
       std::cout << (8 - rank) << "|  ";
       for (unsigned int file = 0; file < 8; ++file)
         {
-          unsigned int square = rank * 8 + file;
+          const unsigned int square = rank * 8 + file;
           std::cout << get_bit (square) << "  ";
         }
       std::cout << "\n";

@@ -21,21 +21,21 @@ constexpr uint64_t not_ab_file_mask{ 18229723555195321596_uint64 };
 constexpr uint64_t not_gh_file_mask{ 4557430888798830399_uint64 };
 
 // some mnemonics
-constexpr std::array<const char *, 12> unicode_pieces
+constexpr std::array<const char *, 12> unicode_symbols
     = { "♟", "♞", "♝", "♜", "♛", "♚", "♙", "♘", "♗", "♖", "♕", "♔" };
 
 // clang-format off
-	constexpr std::array<const char*, 64> square_to_string_table =
-	{
-		"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
-		"a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
-		"a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
-		"a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
-		"a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
-		"a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
-		"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
-		"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"
-	};
+constexpr std::array<const char*, 64> square_to_string_table =
+{
+	"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
+	"a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+	"a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+	"a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+	"a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+	"a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+	"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+	"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"
+};
   
   namespace Chess
   {
@@ -78,6 +78,53 @@ constexpr std::array<const char *, 12> unicode_pieces
 		black_king_side_castle =  0b0100,
 		black_queen_side_castle = 0b1000 
 	};
+
+	constexpr unsigned int fen_to_piece(const char FEN)
+	{
+		switch (FEN)
+		{
+		case 'P': return white_pawn;
+		case 'N': return white_knight;
+		case 'B': return white_bishop;
+		case 'R': return white_rook;
+		case 'Q': return white_queen;
+		case 'K': return white_king;
+		case 'p': return black_pawn;
+		case 'n': return black_knight;
+		case 'b': return black_bishop;
+		case 'r': return black_rook;
+		case 'q': return black_queen;
+		case 'k': return black_king;
+		default:  return 420;
+		}
+	}
+
+	constexpr unsigned int fen_to_piece_type(const char FEN)
+	{
+		switch (FEN)
+		{
+		case 'P':
+		case 'p':
+			return pawn;
+		case 'N':
+		case 'n':
+			return knight;
+		case 'B':
+		case 'b':
+			return bishop;
+		case 'R':
+		case 'r':
+			return rook;
+		case 'Q':
+		case 'q':
+			return queen;
+		case 'K':
+		case 'k':
+			return king;
+		default:
+			return 0;
+		}
+	}
 
   };
 // clang-format on
