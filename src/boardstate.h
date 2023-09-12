@@ -13,7 +13,7 @@ public:
   Boardstate (const Boardstate &) = default;
   Boardstate &operator= (Boardstate &&) = default;
   Boardstate &operator= (const Boardstate &) = default;
-  ~Boardstate (void);
+  ~Boardstate (void) = default;
   Bitboard bitboards[12];
   Bitboard occupancies[3];
   bool side_to_move;

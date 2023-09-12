@@ -1,5 +1,6 @@
 #include "attacks.h"
 #include "bitboard.h"
+#include "types.h"
 
 Attacks::Attacks (void)
 {
@@ -13,8 +14,8 @@ Attacks::precompute_leaper_pieces_attacks (void)
 
   for (unsigned int square = 0; square < 64; ++square)
     {
-      precomputed_pawn_attacks_table[0][square] = slow_attacks.slow_pawn_attacks (0, square);
-      precomputed_pawn_attacks_table[1][square] = slow_attacks.slow_pawn_attacks (1, square);
+      precomputed_pawn_attacks_table[0][square] = slow_attacks.slow_pawn_attacks (Chess::white, square);
+      precomputed_pawn_attacks_table[1][square] = slow_attacks.slow_pawn_attacks (Chess::black, square);
 
       precomputed_knight_attacks_table[square] = slow_attacks.slow_knight_attacks (square);
       precomputed_king_attacks_table[square] = slow_attacks.slow_king_attacks (square);
@@ -42,9 +43,9 @@ Attacks::king_attacks (const unsigned int square) const
 Bitboard
 Attacks::rook_attacks (const Bitboard occupancy, const unsigned int square) const
 {
-  unsigned int magic_index
-      = static_cast<unsigned int> (((occupancy & magics.rook_potential_blockers_table[square]) * magics.precomputed_rook_magics[square])
-                                   >> (64 - magics.rook_blocker_count_table[square]));
+  unsigned int magic_index = static_cast<unsigned int> (
+      ((occupancy & magics.rook_potential_blockers_table[square]) * magics.precomputed_rook_magics[square])
+      >> (64 - magics.rook_blocker_count_table[square]));
 
   return magics.precomputed_rook_attacks_hash_table[square][magic_index];
 }
@@ -53,7 +54,8 @@ Bitboard
 Attacks::bishop_attacks (const Bitboard occupancy, const unsigned int square) const
 {
   unsigned int magic_index
-      = static_cast<unsigned int> (((occupancy & magics.bishop_potential_blockers_table[square]) * magics.precomputed_bishop_magics[square])
+      = static_cast<unsigned int> (((occupancy & magics.bishop_potential_blockers_table[square])
+                                    * magics.precomputed_bishop_magics[square])
                                    >> (64 - magics.bishop_blocker_count_table[square]));
 
   return magics.precomputed_bishop_attacks_hash_table[square][magic_index];

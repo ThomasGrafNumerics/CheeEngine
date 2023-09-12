@@ -1,6 +1,9 @@
 
 #include "board.h"
+#include "boardstate.h"
 #include "types.h"
+
+// Board::Board () : boardstate () {}
 
 void
 Board::print_board (void) const
@@ -42,63 +45,73 @@ Board::print_board (void) const
   std::cout << "castling rights: " << wk << " " << wq << " " << bk << " " << bq << "\n";
 }
 
-// void
-// Board::parseFEN (const std::string &FEN)
-// {
-//   boardstate.clear_boardstate ();
-//   visited_nodes = 0;
-//   // auto iter = FEN.begin ();
-//   for (unsigned int square = 0; square < 64;)
-//     {
-// char letter = *(iter++);
-// if (isdigit (letter))
-//   {
-//     square += letter - '0';
-//   }
-// else if (isalpha (letter))
-//   {
-//     boardstate.bitboards[FenToPiece (letter)].set_bit (square++);
-//   }
-// }
-//
-// 	for (int piece = WHITE_PAWN; piece <= WHITE_KING; ++piece)
-// 	{
-// 		boardstate.occupancies[WHITE] |= boardstate.bitboards[piece];
-// 	}
-// 	for (int piece = BLACK_PAWN; piece <= BLACK_KING; ++piece)
-// 	{
-// 		boardstate.occupancies[BLACK] |= boardstate.bitboards[piece];
-// 	}
-// 	boardstate.occupancies[BOTH_SIDES] = boardstate.occupancies[WHITE] | boardstate.occupancies[BLACK];
-//
-// 	boardstate.side_to_move = (*(++iter) == 'w' ? WHITE : BLACK);
-// 	iter += 2;
-//
-// 	while (true)
-// 	{
-// 		if (*iter == ' ') break;
-//
-// 		switch (*iter)
-// 		{
-// 			case 'K': boardstate.castle |= WHITE_KING_SIDE_CASTLE; break;
-// 			case 'Q': boardstate.castle |= WHITE_QUEEN_SIDE_CASTLE; break;
-// 			case 'k': boardstate.castle |= BLACK_KING_SIDE_CASTLE; break;
-// 			case 'q': boardstate.castle |= BLACK_QUEEN_SIDE_CASTLE; break;
-// 		}
-// 		++iter;
-// 	}
-//
-// 	++iter;
-//
-// 	if (*iter != '-')
-// 	{
-// 		int file = ToFile(*iter);
-// 		++iter;
-// 		int rank = ToRank(*iter);
-// 		boardstate.enpassant_square = rank * 8 + file;
-// 	}
-// 	iter += 2;
-// }
+void
+Board::parseFEN (const std::string &fen)
+{
+  boardstate.clear_boardstate ();
+  visited_nodes = 0;
+  auto iter = fen.begin ();
+  for (unsigned int square = 0; square < 64;)
+    {
+      const char letter = *(iter++);
+      if (isdigit (letter))
+        {
+          square += letter - '0';
+        }
+      else if (isalpha (letter))
+        {
+          boardstate.bitboards[Chess::fen_to_piece (letter)].set_bit (square++);
+        }
+    }
+
+  for (unsigned int piece = Chess::white_pawn; piece <= Chess::white_king; ++piece)
+    {
+      boardstate.occupancies[Chess::white] |= boardstate.bitboards[piece];
+    }
+  for (unsigned int piece = Chess::black_pawn; piece <= Chess::black_king; ++piece)
+    {
+      boardstate.occupancies[Chess::black] |= boardstate.bitboards[piece];
+    }
+  boardstate.occupancies[Chess::both_sides]
+      = boardstate.occupancies[Chess::white] | boardstate.occupancies[Chess::black];
+
+  boardstate.side_to_move = (*(++iter) == 'w' ? Chess::white : Chess::black);
+  iter += 2;
+
+  while (true)
+    {
+      if (*iter == ' ')
+        break;
+
+      switch (*iter)
+        {
+        case 'K':
+          boardstate.castle |= Chess::white_king_side_castle;
+          break;
+        case 'Q':
+          boardstate.castle |= Chess::white_queen_side_castle;
+          break;
+        case 'k':
+          boardstate.castle |= Chess::black_king_side_castle;
+          break;
+        case 'q':
+          boardstate.castle |= Chess::black_queen_side_castle;
+          break;
+        }
+      ++iter;
+    }
+
+  ++iter;
+
+  if (*iter != '-')
+    {
+      unsigned int file = to_file (*iter);
+      ++iter;
+      unsigned int rank = to_rank (*iter);
+      boardstate.enpassant_square = rank * 8 + file;
+    }
+  iter += 2;
+}
 
 bool
 Board::is_square_attacked (const bool attack_side, const unsigned int square) const

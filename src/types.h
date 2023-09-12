@@ -14,6 +14,11 @@ constexpr std::uint64_t operator"" _uint64 (unsigned long long arg)
   return static_cast<std::uint64_t> (arg);
 }
 
+unsigned int get_rank (const int);
+unsigned int get_file (const int);
+unsigned int to_rank (const char);
+unsigned int to_file (const char);
+
 // some constants
 constexpr uint64_t not_a_file_mask{ 18374403900871474942_uint64 };
 constexpr uint64_t not_h_file_mask{ 9187201950435737471_uint64 };
@@ -21,8 +26,12 @@ constexpr uint64_t not_ab_file_mask{ 18229723555195321596_uint64 };
 constexpr uint64_t not_gh_file_mask{ 4557430888798830399_uint64 };
 
 // some mnemonics
+// uncomment for light-mode terminal background
+// constexpr std::array<const char *, 12> unicode_symbols
+//     = { "♙", "♘", "♗", "♖", "♕", "♔", "♟︎", "♞", "♝", "♜", "♛", "♚" };
+// uncomment for dark-mode terminal background
 constexpr std::array<const char *, 12> unicode_symbols
-    = { "♟", "♞", "♝", "♜", "♛", "♚", "♙", "♘", "♗", "♖", "♕", "♔" };
+    = { "♟︎", "♞", "♝", "♜", "♛", "♚", "♙", "♘", "♗", "♖", "♕", "♔" };
 
 // clang-format off
 constexpr std::array<const char*, 64> square_to_string_table =
@@ -36,7 +45,16 @@ constexpr std::array<const char*, 64> square_to_string_table =
 	"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
 	"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1"
 };
-  
+
+// FEN dedug positions
+	const std::string empty_board { "8/8/8/8/8/8/8/8 b - - "};
+	const std::string start_position {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "};
+	const std::string tricky_position {"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "};
+	const std::string killer_position {"rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"};
+	const std::string cmk_position {"r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 "};
+	const std::string repetitions {"2r3k1/R7/8/1R6/8/8/P4KPP/8 w - - 0 40 "};
+	const std::string en_passant_position {"rnbqkbnr/1ppp1ppp/p7/4pP2/8/8/PPPPP1PP/RNBQKBNR w KQkq e6 0 4 "};
+
   namespace Chess
   {
 

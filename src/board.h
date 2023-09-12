@@ -10,12 +10,12 @@
 class Board
 {
 public:
-  Board (void);
+  Board (void) = default;
   Board (Board &&) = default;
   Board (const Board &) = default;
   Board &operator= (Board &&) = default;
   Board &operator= (const Board &) = default;
-  ~Board (void);
+  ~Board (void) = default;
 
   Attacks attacks;
   Boardstate boardstate;
