@@ -11,8 +11,8 @@
 // user defined literal for std::uint64_t type
 constexpr std::uint64_t operator"" _uint64 (unsigned long long arg) { return static_cast<std::uint64_t> (arg); }
 
-unsigned int get_rank (const int);
-unsigned int get_file (const int);
+unsigned int get_rank (const unsigned int);
+unsigned int get_file (const unsigned int);
 unsigned int to_rank (const char);
 unsigned int to_file (const char);
 
@@ -64,6 +64,19 @@ enum  files
 {
 	file_a, file_b, file_c, file_d, file_e, file_f, file_g, file_h
 };
+
+constexpr int castling_permission_filter_table[64] = {
+	 7, 15, 15, 15,  3, 15, 15, 11,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	13, 15, 15, 15, 12, 15, 15, 14
+};
+
+
 
   namespace Chess
   {
@@ -154,25 +167,33 @@ enum  files
 		}
 	}
 
-constexpr char piece_to_fen(const unsigned int piece)
-{
-	switch (piece)
-	{
-	case white_pawn:   return 'P';
-	case white_knight: return 'N';
-	case white_bishop: return 'B';
-	case white_rook:   return 'R';
-	case white_queen:  return 'Q';
-	case white_king:   return 'K';
-	case black_pawn:   return 'p';
-	case black_knight: return 'n';
-	case black_bishop: return 'b';
-	case black_rook:   return 'r';
-	case black_queen:  return 'q';
-	case black_king:   return 'k';
-	default:           return ' ';
-	}
-}
+  constexpr char piece_to_fen(const unsigned int piece)
+  {
+    switch (piece)
+    {
+    case white_pawn:   return 'P';
+    case white_knight: return 'N';
+    case white_bishop: return 'B';
+    case white_rook:   return 'R';
+    case white_queen:  return 'Q';
+    case white_king:   return 'K';
+    case black_pawn:   return 'p';
+    case black_knight: return 'n';
+    case black_bishop: return 'b';
+    case black_rook:   return 'r';
+    case black_queen:  return 'q';
+    case black_king:   return 'k';
+    default:           return ' ';
+    }
+  }
+  constexpr unsigned int piece_side_table[12] = { white, white, white, white, white, white, black, black, black, black, black, black };
+  constexpr unsigned int castle_permission_requirement_table[2][2] = { {white_king_side_castle, white_queen_side_castle}, {black_king_side_castle, black_queen_side_castle} };
+  constexpr uint64_t castle_get_occupancy_mask_table[2][2] = { {6917529027641081856, 1008806316530991104}, {96, 14} };
+
+  enum king_queen_side
+  {
+    king_side, queen_side
+  };
 
   };
 // clang-format on

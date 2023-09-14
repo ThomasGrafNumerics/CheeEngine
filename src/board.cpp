@@ -155,219 +155,179 @@ Board::get_pseudo_moves (void) const
   std::vector<Move> pseudo_moves;
   pseudo_moves.reserve (218);
 
-  int side = boardstate.side_to_move;
-  int pawn = Chess::piece_list_table[side][Chess::pawn];
-
-  // reverse the occupancy, where bit 1 represents an empty space
+  const bool side = boardstate.side_to_move;
   Bitboard not_occupancy = ~boardstate.occupancies[Chess::both_sides];
-  //
-  // 	Bitboard pawn_push = (side == WHITE ? boardstate.bitboards[pawn] >> 8 :
-  // boardstate.bitboards[pawn] << 8) & not_occupancy; 	for (Bitboard cpy_pawn_push = pawn_push;
-  // cpy_pawn_push; cpy_pawn_push.PopBit())
-  // 	{
-  // 		int dest_square = cpy_pawn_push.GetLeastSigBit();
-  // 		int source_square = (side == WHITE ? dest_square + 8 : dest_square - 8);
-  //
-  // 		//no need to check for the side, because pawn can not move backward
-  // 		if (GetRank(dest_square) == RANK_8 || GetRank(dest_square) == RANK_1)
-  // 		{
-  // 			for (int promoted_piece_type = KNIGHT; promoted_piece_type <= QUEEN;
-  // ++promoted_piece_type)
-  // 			{
-  // 				pseudo_moves.push_back(Move(source_square, dest_square, pawn,
-  // promoted_piece_type));
-  // 			}
-  // 		}
-  // 		else
-  // 		{
-  // 			pseudo_moves.push_back(Move(source_square, dest_square, pawn));
-  // 		}
-  // 	}
-  //
-  //
-  // 	Bitboard double_pawn_push = (side == WHITE ? (pawn_push & RANK_3_MASK) >> 8 : (pawn_push &
-  // RANK_6_MASK) << 8) & not_occupancy; 	while (double_pawn_push)
-  // 	{
-  // 		int dest_square = double_pawn_push.GetLeastSigBit();
-  // 		int source_square = (side == WHITE ? dest_square + 16 : dest_square - 16);
-  // 		pseudo_moves.push_back(Move(source_square, dest_square, pawn, 0, Move::DOUBLE_PUSH_FLAG));
-  // 		double_pawn_push.PopBit();
-  // 	}
-  //
-  //
-  // 	for (Bitboard pawn_bitboard = boardstate.bitboards[pawn]; pawn_bitboard; pawn_bitboard.PopBit())
-  // 	{
-  // 		int source_square = pawn_bitboard.GetLeastSigBit();
-  //
-  // 		for (Bitboard pawn_attack = PAWN_ATTACK_TABLE[side][source_square] &
-  // boardstate.occupancies[!side]; pawn_attack; pawn_attack.PopBit())
-  // 		{
-  // 			int dest_square = pawn_attack.GetLeastSigBit();
-  //
-  // 			if (GetRank(dest_square) == RANK_8 || GetRank(dest_square) == RANK_1)
-  // 			{
-  // 				for (int promoted_piece_type = KNIGHT; promoted_piece_type <= QUEEN;
-  // ++promoted_piece_type)
-  // 				{
-  // 					pseudo_moves.push_back(Move(source_square, dest_square, pawn,
-  // promoted_piece_type, Move::CAPTURE_FLAG));
-  // 				}
-  // 			}
-  // 			else
-  // 			{
-  // 				pseudo_moves.push_back(Move(source_square, dest_square, pawn, 0,
-  // Move::CAPTURE_FLAG));
-  // 			}
-  // 		}
-  // 	}
-  //
-  //
-  // 	if (boardstate.enpassant_square != INVALID_SQUARE)
-  // 	{
-  // 		int dest_square = boardstate.enpassant_square;
-  //
-  // 		//simulate an attack from the being captured side, the source must be a pawn
-  // 		for (Bitboard pawn_attack = PAWN_ATTACK_TABLE[!side][dest_square] &
-  // boardstate.bitboards[pawn]; pawn_attack; pawn_attack.PopBit())
-  // 		{
-  // 			int source_square = pawn_attack.GetLeastSigBit();
-  //
-  // 			//do i need capture flag?
-  // 			pseudo_moves.push_back(Move(source_square, dest_square, pawn, 0,
-  // Move::ENPASSANT_FLAG));
-  // 		}
-  // 	}
-  //
-  //
-  //
-  //
-  //
-  //
-  // 	int knight = PIECE_LIST_TABLE[side][KNIGHT];
-  // 	for (Bitboard knight_bitboard = boardstate.bitboards[knight]; knight_bitboard;
-  // knight_bitboard.PopBit())
-  // 	{
-  // 		int source_square = knight_bitboard.GetLeastSigBit();
-  //
-  // 		//knight attacks empty or enemy occupied squares
-  // 		for (Bitboard knight_attack = GetKnightAttackExact(source_square) &
-  // ~boardstate.occupancies[side]; knight_attack; knight_attack.PopBit())
-  // 		{
-  // 			int dest_square = knight_attack.GetLeastSigBit();
-  // 			if(boardstate.occupancies[!side].GetBit(dest_square))
-  // pseudo_moves.push_back(Move(source_square, dest_square, knight, 0, Move::CAPTURE_FLAG));
-  // else pseudo_moves.push_back(Move(source_square, dest_square, knight));
-  // 		}
-  // 	}
-  //
-  //
-  //
-  //
-  // 	int king = PIECE_LIST_TABLE[side][KING];
-  // 	int king_square = boardstate.bitboards[king].GetLeastSigBit();
-  //
-  // 	for (Bitboard king_attack = GetKingAttackExact(king_square) & ~boardstate.occupancies[side];
-  // king_attack; king_attack.PopBit())
-  // 	{
-  // 		int dest_square = king_attack.GetLeastSigBit();
-  //
-  // 		if (boardstate.occupancies[!side].GetBit(dest_square))
-  // pseudo_moves.push_back(Move(king_square, dest_square, king, 0, Move::CAPTURE_FLAG)); 		else
-  // pseudo_moves.push_back(Move(king_square, dest_square, king));
-  // 	}
-  //
-  // 	for (int castle_type = KING_SIDE; castle_type <= QUEEN_SIDE; ++castle_type)
-  // 	{
-  // 		//check for the permission
-  // 		if (boardstate.castle & CASTLE_PERMISSION_REQUIREMENT_TABLE[side][castle_type])
-  // 		{
-  // 			//check the occupancy
-  // 			if ((boardstate.occupancies[BOTH] &
-  // CASTLE_GET_OCCUPANCY_MASK_TABLE[side][castle_type]) == 0)
-  // 			{
-  // 				//king and the adjacent squares can not be in checked
-  // 				int adj_square = (castle_type == KING_SIDE ? king_square + 1 : king_square -
-  // 1); 				int dest_square = (castle_type == KING_SIDE ? king_square + 2 :
-  // king_square
-  // - 2);
-  //
-  // 				if (!IsSquareAttacked(king_square, side^1) && !IsSquareAttacked(adj_square,
-  // side^1))
-  // 				{
-  // 					pseudo_moves.push_back(Move(king_square, dest_square, king, 0,
-  // Move::CASTLING_FLAG));
-  // 				}
-  // 			}
-  // 		}
-  // 	}
-  //
-  //
-  //
-  //
-  //
-  //
-  // 	int bishop = PIECE_LIST_TABLE[side][BISHOP];
-  // 	for (Bitboard bishop_bitboard = boardstate.bitboards[bishop]; bishop_bitboard;
-  // bishop_bitboard.PopBit())
-  // 	{
-  // 		int source_square = bishop_bitboard.GetLeastSigBit();
-  //
-  // 		for (Bitboard bishop_attack = GetBishopAttackExact(source_square,
-  // boardstate.occupancies[BOTH]) & ~boardstate.occupancies[side]; bishop_attack;
-  // bishop_attack.PopBit())
-  // 		{
-  // 			int dest_square = bishop_attack.GetLeastSigBit();
-  //
-  // 			if (boardstate.occupancies[!side].GetBit(dest_square))
-  // pseudo_moves.push_back(Move(source_square, dest_square, bishop, 0, Move::CAPTURE_FLAG));
-  // else pseudo_moves.push_back(Move(source_square, dest_square, bishop));
-  // 		}
-  // 	}
-  //
-  //
-  //
-  //
-  //
-  // 	int rook = PIECE_LIST_TABLE[side][ROOK];
-  // 	for (Bitboard rook_bitboard = boardstate.bitboards[rook]; rook_bitboard; rook_bitboard.PopBit())
-  // 	{
-  // 		int source_square = rook_bitboard.GetLeastSigBit();
-  //
-  // 		//knight attacks empty or enemy occupied squares
-  // 		for (Bitboard rook_attack = GetRookAttackExact(source_square,
-  // boardstate.occupancies[BOTH]) & ~boardstate.occupancies[side]; rook_attack;
-  // rook_attack.PopBit())
-  // 		{
-  // 			int dest_square = rook_attack.GetLeastSigBit();
-  //
-  // 			if (boardstate.occupancies[!side].GetBit(dest_square))
-  // pseudo_moves.push_back(Move(source_square, dest_square, rook, 0, Move::CAPTURE_FLAG));
-  // else pseudo_moves.push_back(Move(source_square, dest_square, rook));
-  // 		}
-  // 	}
-  //
-  //
-  //
-  //
-  //
-  // 	int queen = PIECE_LIST_TABLE[side][QUEEN];
-  // 	for (Bitboard queen_bitboard = boardstate.bitboards[queen]; queen_bitboard;
-  // queen_bitboard.PopBit())
-  // 	{
-  // 		int source_square = queen_bitboard.GetLeastSigBit();
-  //
-  // 		//knight attacks empty or enemy occupied squares
-  // 		for (Bitboard queen_attack = GetQueenAttackExact(source_square,
-  // boardstate.occupancies[BOTH]) & ~boardstate.occupancies[side]; queen_attack;
-  // queen_attack.PopBit())
-  // 		{
-  // 			int dest_square = queen_attack.GetLeastSigBit();
-  //
-  // 			if (boardstate.occupancies[!side].GetBit(dest_square))
-  // pseudo_moves.push_back(Move(source_square, dest_square, queen, 0, Move::CAPTURE_FLAG));
-  // else pseudo_moves.push_back(Move(source_square, dest_square, queen));
-  // 		}
-  // 	}
-  //
+
+  int pawn = Chess::piece_list_table[side][Chess::pawn];
+  Bitboard pawn_push = (side == Chess::white ? boardstate.bitboards[pawn] >> 8 : boardstate.bitboards[pawn] << 8) & not_occupancy;
+
+  // if (pawn_push.get_number_of_set_bits ())
+  //   {
+  for (Bitboard cpy_pawn_push = pawn_push; cpy_pawn_push; cpy_pawn_push.clear_least_significant_set_bit ())
+    {
+      int dest_square = cpy_pawn_push.get_index_of_least_significant_set_bit ();
+      int source_square = (side == Chess::white ? dest_square + 8 : dest_square - 8);
+
+      if (get_rank (dest_square) == rank_8 || get_rank (dest_square) == rank_1)
+        {
+          for (int promoted_piece_type = Chess::knight; promoted_piece_type <= Chess::queen; ++promoted_piece_type)
+            {
+              pseudo_moves.push_back (Move (source_square, dest_square, pawn, promoted_piece_type));
+            }
+        }
+      else
+        {
+          pseudo_moves.push_back (Move (source_square, dest_square, pawn));
+        }
+    }
+
+  Bitboard double_pawn_push = (side == Chess::white ? (pawn_push & rank_3_mask) >> 8 : (pawn_push & rank_6_mask) << 8) & not_occupancy;
+  while (double_pawn_push)
+    {
+      int dest_square = double_pawn_push.get_index_of_least_significant_set_bit ();
+      int source_square = (side == Chess::white ? dest_square + 16 : dest_square - 16);
+      pseudo_moves.push_back (Move (source_square, dest_square, pawn, 0, Move::double_push_flag));
+      double_pawn_push.clear_least_significant_set_bit ();
+    }
+
+  for (Bitboard pawn_bitboard = boardstate.bitboards[pawn]; pawn_bitboard; pawn_bitboard.clear_least_significant_set_bit ())
+    {
+      int source_square = pawn_bitboard.get_index_of_least_significant_set_bit ();
+
+      for (Bitboard pawn_attack = attacks.precomputed_pawn_attacks_table[side][source_square] & boardstate.occupancies[!side]; pawn_attack;
+           pawn_attack.clear_least_significant_set_bit ())
+        {
+          int dest_square = pawn_attack.get_index_of_least_significant_set_bit ();
+
+          if (get_rank (dest_square) == rank_8 || get_rank (dest_square) == rank_1)
+            {
+              for (int promoted_piece_type = Chess::knight; promoted_piece_type <= Chess::queen; ++promoted_piece_type)
+                {
+                  pseudo_moves.push_back (Move (source_square, dest_square, pawn, promoted_piece_type, Move::capture_flag));
+                }
+            }
+          else
+            {
+              pseudo_moves.push_back (Move (source_square, dest_square, pawn, 0, Move::capture_flag));
+            }
+        }
+    }
+
+  if (boardstate.enpassant_square != Chess::forbidden_square)
+    {
+      int dest_square = boardstate.enpassant_square;
+      for (Bitboard pawn_attack = attacks.precomputed_pawn_attacks_table[!side][dest_square] & boardstate.bitboards[pawn]; pawn_attack;
+           pawn_attack.clear_least_significant_set_bit ())
+        {
+          int source_square = pawn_attack.get_index_of_least_significant_set_bit ();
+
+          pseudo_moves.push_back (Move (source_square, dest_square, pawn, 0, Move::enpassant_flag));
+        }
+    }
+
+  int knight = Chess::piece_list_table[side][Chess::knight];
+  for (Bitboard knight_bitboard = boardstate.bitboards[knight]; knight_bitboard; knight_bitboard.clear_least_significant_set_bit ())
+    {
+      int source_square = knight_bitboard.get_index_of_least_significant_set_bit ();
+
+      // knight attacks empty or enemy occupied squares
+      for (Bitboard knight_attack = attacks.knight_attacks (source_square) & ~boardstate.occupancies[side]; knight_attack; knight_attack.clear_least_significant_set_bit ())
+        {
+          int dest_square = knight_attack.get_index_of_least_significant_set_bit ();
+          if (boardstate.occupancies[!side].get_bit (dest_square))
+            pseudo_moves.push_back (Move (source_square, dest_square, knight, 0, Move::capture_flag));
+          else
+            pseudo_moves.push_back (Move (source_square, dest_square, knight));
+        }
+    }
+
+  int king = Chess::piece_list_table[side][Chess::king];
+  if (boardstate.bitboards[king])
+    {
+      int king_square = boardstate.bitboards[king].get_index_of_least_significant_set_bit ();
+
+      for (Bitboard king_attack = attacks.king_attacks (king_square) & ~boardstate.occupancies[side]; king_attack; king_attack.clear_least_significant_set_bit ())
+        {
+          int dest_square = king_attack.get_index_of_least_significant_set_bit ();
+
+          if (boardstate.occupancies[!side].get_bit (dest_square))
+            pseudo_moves.push_back (Move (king_square, dest_square, king, 0, Move::capture_flag));
+          else
+            pseudo_moves.push_back (Move (king_square, dest_square, king));
+        }
+
+      for (int castle_type = Chess::king_side; castle_type <= Chess::queen_side; ++castle_type)
+        {
+          if (boardstate.castle & Chess::castle_permission_requirement_table[side][castle_type])
+            {
+              // check the occupancy
+              if ((boardstate.occupancies[Chess::both_sides] & Chess::castle_get_occupancy_mask_table[side][castle_type]) == 0)
+                {
+                  // king and the adjacent squares can not be in checked
+                  int adj_square = (castle_type == Chess::king_side ? king_square + 1 : king_square - 1);
+                  int dest_square = (castle_type == Chess::king_side ? king_square + 2 : king_square - 2);
+
+                  if (!is_square_attacked (king_square, side ^ 1) && !is_square_attacked (adj_square, side ^ 1))
+                    {
+                      pseudo_moves.push_back (Move (king_square, dest_square, king, 0, Move::castling_flag));
+                    }
+                }
+            }
+        }
+    }
+
+  int bishop = Chess::piece_list_table[side][Chess::bishop];
+  for (Bitboard bishop_bitboard = boardstate.bitboards[bishop]; bishop_bitboard; bishop_bitboard.clear_least_significant_set_bit ())
+    {
+      int source_square = bishop_bitboard.get_index_of_least_significant_set_bit ();
+
+      for (Bitboard bishop_attack = attacks.bishop_attacks (boardstate.occupancies[Chess::both_sides], source_square) & ~boardstate.occupancies[side]; bishop_attack;
+           bishop_attack.clear_least_significant_set_bit ())
+        {
+          int dest_square = bishop_attack.get_index_of_least_significant_set_bit ();
+
+          if (boardstate.occupancies[!side].get_bit (dest_square))
+            pseudo_moves.push_back (Move (source_square, dest_square, bishop, 0, Move::capture_flag));
+          else
+            pseudo_moves.push_back (Move (source_square, dest_square, bishop));
+        }
+    }
+
+  int rook = Chess::piece_list_table[side][Chess::rook];
+  for (Bitboard rook_bitboard = boardstate.bitboards[rook]; rook_bitboard; rook_bitboard.clear_least_significant_set_bit ())
+    {
+      int source_square = rook_bitboard.get_index_of_least_significant_set_bit ();
+
+      // knight attacks empty or enemy occupied squares
+      for (Bitboard rook_attack = attacks.rook_attacks (boardstate.occupancies[Chess::both_sides], source_square) & ~boardstate.occupancies[side]; rook_attack;
+           rook_attack.clear_least_significant_set_bit ())
+        {
+          int dest_square = rook_attack.get_index_of_least_significant_set_bit ();
+
+          if (boardstate.occupancies[!side].get_bit (dest_square))
+            pseudo_moves.push_back (Move (source_square, dest_square, rook, 0, Move::capture_flag));
+          else
+            pseudo_moves.push_back (Move (source_square, dest_square, rook));
+        }
+    }
+
+  int queen = Chess::piece_list_table[side][Chess::queen];
+  for (Bitboard queen_bitboard = boardstate.bitboards[queen]; queen_bitboard; queen_bitboard.clear_least_significant_set_bit ())
+    {
+      int source_square = queen_bitboard.get_index_of_least_significant_set_bit ();
+
+      // knight attacks empty or enemy occupied squares
+      for (Bitboard queen_attack = attacks.queen_attacks (boardstate.occupancies[Chess::both_sides], source_square) & ~boardstate.occupancies[side]; queen_attack;
+           queen_attack.clear_least_significant_set_bit ())
+        {
+          int dest_square = queen_attack.get_index_of_least_significant_set_bit ();
+
+          if (boardstate.occupancies[!side].get_bit (dest_square))
+            pseudo_moves.push_back (Move (source_square, dest_square, queen, 0, Move::capture_flag));
+          else
+            pseudo_moves.push_back (Move (source_square, dest_square, queen));
+        }
+    }
+
   return pseudo_moves;
 }

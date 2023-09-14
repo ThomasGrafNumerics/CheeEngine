@@ -1,12 +1,12 @@
 #include "types.h"
 
 unsigned int
-get_rank (const int square)
+get_rank (const unsigned int square)
 {
   return square >> 3;
 }
 unsigned int
-get_file (const int square)
+get_file (const unsigned int square)
 {
   return square & (8 - 1);
 }
