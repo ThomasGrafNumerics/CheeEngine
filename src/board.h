@@ -4,8 +4,10 @@
 #include "bitboard.h"
 #include "boardstate.h"
 #include "magics.h"
+#include "move.h"
 #include "slow_attacks.h"
 #include "types.h"
+#include <vector>
 
 class Board
 {
@@ -25,6 +27,7 @@ public:
   void parseFEN (const std::string &);
   bool is_square_attacked (const bool, const unsigned int) const;
   bool is_king_attacked (void) const;
+  std::vector<Move> get_pseudo_moves (void) const;
 
 private:
 };

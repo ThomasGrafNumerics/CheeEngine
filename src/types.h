@@ -3,16 +3,13 @@
 #include <array>
 #include <bitset>
 #include <cassert>
+#include <cstdint>
 #include <iostream>
 #include <string>
-
-#include <cstdint>
+#include <vector>
 
 // user defined literal for std::uint64_t type
-constexpr std::uint64_t operator"" _uint64 (unsigned long long arg)
-{
-  return static_cast<std::uint64_t> (arg);
-}
+constexpr std::uint64_t operator"" _uint64 (unsigned long long arg) { return static_cast<std::uint64_t> (arg); }
 
 unsigned int get_rank (const int);
 unsigned int get_file (const int);
@@ -24,14 +21,17 @@ constexpr uint64_t not_a_file_mask{ 18374403900871474942_uint64 };
 constexpr uint64_t not_h_file_mask{ 9187201950435737471_uint64 };
 constexpr uint64_t not_ab_file_mask{ 18229723555195321596_uint64 };
 constexpr uint64_t not_gh_file_mask{ 4557430888798830399_uint64 };
+constexpr uint64_t rank_7_mask{ 65280 };
+constexpr uint64_t rank_6_mask{ 16711680 };
+constexpr uint64_t rank_3_mask{ 280375465082880 };
+constexpr uint64_t rank_2_mask{ 71776119061217280 };
 
 // some mnemonics
 // uncomment for light-mode terminal background
-// constexpr std::array<const char *, 12> unicode_symbols
-//     = { "♙", "♘", "♗", "♖", "♕", "♔", "♟︎", "♞", "♝", "♜", "♛", "♚" };
+constexpr std::array<const char *, 12> unicode_symbols = { "♙", "♘", "♗", "♖", "♕", "♔", "♟︎", "♞", "♝", "♜", "♛", "♚" };
 // uncomment for dark-mode terminal background
-constexpr std::array<const char *, 12> unicode_symbols
-    = { "♟︎", "♞", "♝", "♜", "♛", "♚", "♙", "♘", "♗", "♖", "♕", "♔" };
+// constexpr std::array<const char *, 12> unicode_symbols
+//     = { "♟︎", "♞", "♝", "♜", "♛", "♚", "♙", "♘", "♗", "♖", "♕", "♔" };
 
 // clang-format off
 constexpr std::array<const char*, 64> square_to_string_table =
@@ -54,6 +54,16 @@ constexpr std::array<const char*, 64> square_to_string_table =
 	const std::string cmk_position {"r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 "};
 	const std::string repetitions {"2r3k1/R7/8/1R6/8/8/P4KPP/8 w - - 0 40 "};
 	const std::string en_passant_position {"rnbqkbnr/1ppp1ppp/p7/4pP2/8/8/PPPPP1PP/RNBQKBNR w KQkq e6 0 4 "};
+
+enum  ranks
+{
+	rank_8, rank_7, rank_6, rank_5, rank_4, rank_3, rank_2, rank_1
+};
+
+enum  files
+{
+	file_a, file_b, file_c, file_d, file_e, file_f, file_g, file_h
+};
 
   namespace Chess
   {
@@ -143,6 +153,26 @@ constexpr std::array<const char*, 64> square_to_string_table =
 			return 0;
 		}
 	}
+
+constexpr char piece_to_fen(const unsigned int piece)
+{
+	switch (piece)
+	{
+	case white_pawn:   return 'P';
+	case white_knight: return 'N';
+	case white_bishop: return 'B';
+	case white_rook:   return 'R';
+	case white_queen:  return 'Q';
+	case white_king:   return 'K';
+	case black_pawn:   return 'p';
+	case black_knight: return 'n';
+	case black_bishop: return 'b';
+	case black_rook:   return 'r';
+	case black_queen:  return 'q';
+	case black_king:   return 'k';
+	default:           return ' ';
+	}
+}
 
   };
 // clang-format on

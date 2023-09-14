@@ -4,18 +4,33 @@
 
 class Move
 {
+
+  // clang-format off
+  	/*
+	            binary move bits           hexidecimal constants
+         
+         0000 0000 0000 0000 0011 1111    source square               0x3f
+         0000 0000 0000 1111 1100 0000    dest square         >> 6  & 0x3f
+         0000 0000 1111 0000 0000 0000    moved piece         >> 12 & 0xf
+         0000 1111 0000 0000 0000 0000    promoted piece      >> 16 & 0xf
+         0001 0000 0000 0000 0000 0000    capture flag           0x100000
+         0010 0000 0000 0000 0000 0000    enpassant flag         0x200000
+         0100 0000 0000 0000 0000 0000    double push flag       0x400000
+         1000 0000 0000 0000 0000 0000    castling flag          0x800000
+	*/
+  // clang-format on
 public:
   Move (void);
   Move (Move &&) = default;
   Move (const Move &) = default;
   Move &operator= (Move &&) = default;
   Move &operator= (const Move &) = default;
-  ~Move ();
+  ~Move () = default;
 
   int get_source () const;
   int get_dest () const;
   int get_moved_piece () const;
-  int get_promoted_piecetype () const;
+  int get_promoted_piece_type () const;
   bool is_capture () const;
   bool is_enpassant () const;
   bool is_double_push () const;
