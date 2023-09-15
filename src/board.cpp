@@ -161,8 +161,6 @@ Board::get_pseudo_moves (void) const
   int pawn = Chess::piece_list_table[side][Chess::pawn];
   Bitboard pawn_push = (side == Chess::white ? boardstate.bitboards[pawn] >> 8 : boardstate.bitboards[pawn] << 8) & not_occupancy;
 
-  // if (pawn_push.get_number_of_set_bits ())
-  //   {
   for (Bitboard cpy_pawn_push = pawn_push; cpy_pawn_push; cpy_pawn_push.clear_least_significant_set_bit ())
     {
       int dest_square = cpy_pawn_push.get_index_of_least_significant_set_bit ();
@@ -263,11 +261,11 @@ Board::get_pseudo_moves (void) const
               // check the occupancy
               if ((boardstate.occupancies[Chess::both_sides] & Chess::castle_get_occupancy_mask_table[side][castle_type]) == 0)
                 {
-                  // king and the adjacent squares can not be in checked
+                  // king and the adjacent squares cannot be in check
                   int adj_square = (castle_type == Chess::king_side ? king_square + 1 : king_square - 1);
                   int dest_square = (castle_type == Chess::king_side ? king_square + 2 : king_square - 2);
 
-                  if (!is_square_attacked (king_square, side ^ 1) && !is_square_attacked (adj_square, side ^ 1))
+                  if (!is_square_attacked (king_square, !side) && !is_square_attacked (adj_square, !side))
                     {
                       pseudo_moves.push_back (Move (king_square, dest_square, king, 0, Move::castling_flag));
                     }

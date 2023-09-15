@@ -3,8 +3,6 @@
 #include "types.h"
 #include <iostream>
 
-using std::cout;
-
 int
 Move::get_source () const
 {
@@ -63,10 +61,10 @@ Move::clear ()
 void
 Move::print_move () const
 {
-  cout << square_to_string_table[get_source ()] << square_to_string_table[get_dest ()];
+  std::cout << square_to_string_table[get_source ()] << square_to_string_table[get_dest ()];
   int promoted_piece = get_promoted_piece_type ();
   if (promoted_piece)
-    cout << Chess::piece_to_fen (promoted_piece);
+    std::cout << Chess::piece_to_fen (promoted_piece);
 }
 
 Move::operator int () const { return move; }

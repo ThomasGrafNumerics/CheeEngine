@@ -52,7 +52,7 @@ public:
   static constexpr int enpassant_flag = 0x200000;
   static constexpr int double_push_flag = 0x400000;
   static constexpr int castling_flag = 0x800000;
-  static constexpr int violent_move_flag = get_piece << 16 | capture_flag | enpassant_flag;
+  static constexpr int violent_move_flag = (get_piece << 16) | capture_flag | enpassant_flag;
 
   // move ordering
   static constexpr int futility_move_priority = 0;
