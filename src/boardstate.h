@@ -22,9 +22,9 @@ public:
   unsigned int fifty_moves;
   uint64_t position_key;
   void clear_boardstate (void);
-  void hash_piece (int piece, int square);
-  void hash_enpassant (int square);
-  void hash_castle (int castle);
+  void hash_piece (const unsigned int piece, const unsigned int square);
+  void hash_enpassant (const unsigned int square);
+  void hash_castle (const unsigned int castle);
   void hash_side_to_move (void);
   void generate_new_key (void);
   static void init_zobrist_keys (void);

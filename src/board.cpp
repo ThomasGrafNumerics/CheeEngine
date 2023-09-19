@@ -1,9 +1,13 @@
-
 #include "board.h"
 #include "boardstate.h"
 #include "types.h"
 
-// Board::Board () : boardstate () {}
+Board::Board ()
+    : boardstate{}, boardstate_history{ boardstate_stack_size }, visited_nodes{ 0 }, pv_length{}, pv_table{}, killer_heuristic{},
+      repeated_position{ new bool[repeated_position_size] }
+{
+  parseFEN ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+}
 
 void
 Board::print_board (void) const
@@ -145,7 +149,7 @@ Board::is_king_attacked (void) const
 {
   const bool king_side = boardstate.side_to_move;
   const unsigned int king = Chess::piece_list_table[king_side][Chess::king];
-  int king_square = boardstate.bitboards[king].get_index_of_least_significant_set_bit ();
+  const unsigned int king_square = boardstate.bitboards[king].get_index_of_least_significant_set_bit ();
   return is_square_attacked (!king_side, king_square);
 }
 
@@ -158,17 +162,17 @@ Board::get_pseudo_moves (void) const
   const bool side = boardstate.side_to_move;
   Bitboard not_occupancy = ~boardstate.occupancies[Chess::both_sides];
 
-  int pawn = Chess::piece_list_table[side][Chess::pawn];
+  const unsigned int pawn = Chess::piece_list_table[side][Chess::pawn];
   Bitboard pawn_push = (side == Chess::white ? boardstate.bitboards[pawn] >> 8 : boardstate.bitboards[pawn] << 8) & not_occupancy;
 
   for (Bitboard cpy_pawn_push = pawn_push; cpy_pawn_push; cpy_pawn_push.clear_least_significant_set_bit ())
     {
-      int dest_square = cpy_pawn_push.get_index_of_least_significant_set_bit ();
-      int source_square = (side == Chess::white ? dest_square + 8 : dest_square - 8);
+      const unsigned int dest_square = cpy_pawn_push.get_index_of_least_significant_set_bit ();
+      const unsigned int source_square = (side == Chess::white ? dest_square + 8 : dest_square - 8);
 
       if (get_rank (dest_square) == rank_8 || get_rank (dest_square) == rank_1)
         {
-          for (int promoted_piece_type = Chess::knight; promoted_piece_type <= Chess::queen; ++promoted_piece_type)
+          for (unsigned int promoted_piece_type = Chess::knight; promoted_piece_type <= Chess::queen; ++promoted_piece_type)
             {
               pseudo_moves.push_back (Move (source_square, dest_square, pawn, promoted_piece_type));
             }
@@ -182,24 +186,24 @@ Board::get_pseudo_moves (void) const
   Bitboard double_pawn_push = (side == Chess::white ? (pawn_push & rank_3_mask) >> 8 : (pawn_push & rank_6_mask) << 8) & not_occupancy;
   while (double_pawn_push)
     {
-      int dest_square = double_pawn_push.get_index_of_least_significant_set_bit ();
-      int source_square = (side == Chess::white ? dest_square + 16 : dest_square - 16);
+      const unsigned int dest_square = double_pawn_push.get_index_of_least_significant_set_bit ();
+      const unsigned int source_square = (side == Chess::white ? dest_square + 16 : dest_square - 16);
       pseudo_moves.push_back (Move (source_square, dest_square, pawn, 0, Move::double_push_flag));
       double_pawn_push.clear_least_significant_set_bit ();
     }
 
   for (Bitboard pawn_bitboard = boardstate.bitboards[pawn]; pawn_bitboard; pawn_bitboard.clear_least_significant_set_bit ())
     {
-      int source_square = pawn_bitboard.get_index_of_least_significant_set_bit ();
+      const unsigned int source_square = pawn_bitboard.get_index_of_least_significant_set_bit ();
 
       for (Bitboard pawn_attack = attacks.precomputed_pawn_attacks_table[side][source_square] & boardstate.occupancies[!side]; pawn_attack;
            pawn_attack.clear_least_significant_set_bit ())
         {
-          int dest_square = pawn_attack.get_index_of_least_significant_set_bit ();
+          const unsigned int dest_square = pawn_attack.get_index_of_least_significant_set_bit ();
 
           if (get_rank (dest_square) == rank_8 || get_rank (dest_square) == rank_1)
             {
-              for (int promoted_piece_type = Chess::knight; promoted_piece_type <= Chess::queen; ++promoted_piece_type)
+              for (unsigned int promoted_piece_type = Chess::knight; promoted_piece_type <= Chess::queen; ++promoted_piece_type)
                 {
                   pseudo_moves.push_back (Move (source_square, dest_square, pawn, promoted_piece_type, Move::capture_flag));
                 }
@@ -213,25 +217,22 @@ Board::get_pseudo_moves (void) const
 
   if (boardstate.enpassant_square != Chess::forbidden_square)
     {
-      int dest_square = boardstate.enpassant_square;
+      const unsigned int dest_square = boardstate.enpassant_square;
       for (Bitboard pawn_attack = attacks.precomputed_pawn_attacks_table[!side][dest_square] & boardstate.bitboards[pawn]; pawn_attack;
            pawn_attack.clear_least_significant_set_bit ())
         {
-          int source_square = pawn_attack.get_index_of_least_significant_set_bit ();
-
+          const unsigned int source_square = pawn_attack.get_index_of_least_significant_set_bit ();
           pseudo_moves.push_back (Move (source_square, dest_square, pawn, 0, Move::enpassant_flag));
         }
     }
 
-  int knight = Chess::piece_list_table[side][Chess::knight];
+  const unsigned int knight = Chess::piece_list_table[side][Chess::knight];
   for (Bitboard knight_bitboard = boardstate.bitboards[knight]; knight_bitboard; knight_bitboard.clear_least_significant_set_bit ())
     {
-      int source_square = knight_bitboard.get_index_of_least_significant_set_bit ();
-
-      // knight attacks empty or enemy occupied squares
+      const unsigned int source_square = knight_bitboard.get_index_of_least_significant_set_bit ();
       for (Bitboard knight_attack = attacks.knight_attacks (source_square) & ~boardstate.occupancies[side]; knight_attack; knight_attack.clear_least_significant_set_bit ())
         {
-          int dest_square = knight_attack.get_index_of_least_significant_set_bit ();
+          const unsigned int dest_square = knight_attack.get_index_of_least_significant_set_bit ();
           if (boardstate.occupancies[!side].get_bit (dest_square))
             pseudo_moves.push_back (Move (source_square, dest_square, knight, 0, Move::capture_flag));
           else
@@ -239,14 +240,13 @@ Board::get_pseudo_moves (void) const
         }
     }
 
-  int king = Chess::piece_list_table[side][Chess::king];
+  const unsigned int king = Chess::piece_list_table[side][Chess::king];
   if (boardstate.bitboards[king])
     {
-      int king_square = boardstate.bitboards[king].get_index_of_least_significant_set_bit ();
-
+      const unsigned int king_square = boardstate.bitboards[king].get_index_of_least_significant_set_bit ();
       for (Bitboard king_attack = attacks.king_attacks (king_square) & ~boardstate.occupancies[side]; king_attack; king_attack.clear_least_significant_set_bit ())
         {
-          int dest_square = king_attack.get_index_of_least_significant_set_bit ();
+          const unsigned int dest_square = king_attack.get_index_of_least_significant_set_bit ();
 
           if (boardstate.occupancies[!side].get_bit (dest_square))
             pseudo_moves.push_back (Move (king_square, dest_square, king, 0, Move::capture_flag));
@@ -254,7 +254,7 @@ Board::get_pseudo_moves (void) const
             pseudo_moves.push_back (Move (king_square, dest_square, king));
         }
 
-      for (int castle_type = Chess::king_side; castle_type <= Chess::queen_side; ++castle_type)
+      for (unsigned int castle_type = Chess::king_side; castle_type <= Chess::queen_side; ++castle_type)
         {
           if (boardstate.castle & Chess::castle_permission_requirement_table[side][castle_type])
             {
@@ -262,10 +262,11 @@ Board::get_pseudo_moves (void) const
               if ((boardstate.occupancies[Chess::both_sides] & Chess::castle_get_occupancy_mask_table[side][castle_type]) == 0)
                 {
                   // king and the adjacent squares cannot be in check
-                  int adj_square = (castle_type == Chess::king_side ? king_square + 1 : king_square - 1);
-                  int dest_square = (castle_type == Chess::king_side ? king_square + 2 : king_square - 2);
+                  const unsigned int adj_square = (castle_type == Chess::king_side ? king_square + 1 : king_square - 1);
+                  const unsigned int dest_square = (castle_type == Chess::king_side ? king_square + 2 : king_square - 2);
 
-                  if (!is_square_attacked (king_square, !side) && !is_square_attacked (adj_square, !side))
+                  // do i need to check dest_square?
+                  if (!is_square_attacked (!side, king_square) && !is_square_attacked (!side, adj_square) && !is_square_attacked (!side, dest_square))
                     {
                       pseudo_moves.push_back (Move (king_square, dest_square, king, 0, Move::castling_flag));
                     }
@@ -274,15 +275,15 @@ Board::get_pseudo_moves (void) const
         }
     }
 
-  int bishop = Chess::piece_list_table[side][Chess::bishop];
+  const unsigned int bishop = Chess::piece_list_table[side][Chess::bishop];
   for (Bitboard bishop_bitboard = boardstate.bitboards[bishop]; bishop_bitboard; bishop_bitboard.clear_least_significant_set_bit ())
     {
-      int source_square = bishop_bitboard.get_index_of_least_significant_set_bit ();
+      const unsigned int source_square = bishop_bitboard.get_index_of_least_significant_set_bit ();
 
       for (Bitboard bishop_attack = attacks.bishop_attacks (boardstate.occupancies[Chess::both_sides], source_square) & ~boardstate.occupancies[side]; bishop_attack;
            bishop_attack.clear_least_significant_set_bit ())
         {
-          int dest_square = bishop_attack.get_index_of_least_significant_set_bit ();
+          const unsigned int dest_square = bishop_attack.get_index_of_least_significant_set_bit ();
 
           if (boardstate.occupancies[!side].get_bit (dest_square))
             pseudo_moves.push_back (Move (source_square, dest_square, bishop, 0, Move::capture_flag));
@@ -291,16 +292,16 @@ Board::get_pseudo_moves (void) const
         }
     }
 
-  int rook = Chess::piece_list_table[side][Chess::rook];
+  const unsigned int rook = Chess::piece_list_table[side][Chess::rook];
   for (Bitboard rook_bitboard = boardstate.bitboards[rook]; rook_bitboard; rook_bitboard.clear_least_significant_set_bit ())
     {
-      int source_square = rook_bitboard.get_index_of_least_significant_set_bit ();
+      const unsigned int source_square = rook_bitboard.get_index_of_least_significant_set_bit ();
 
       // knight attacks empty or enemy occupied squares
       for (Bitboard rook_attack = attacks.rook_attacks (boardstate.occupancies[Chess::both_sides], source_square) & ~boardstate.occupancies[side]; rook_attack;
            rook_attack.clear_least_significant_set_bit ())
         {
-          int dest_square = rook_attack.get_index_of_least_significant_set_bit ();
+          const unsigned int dest_square = rook_attack.get_index_of_least_significant_set_bit ();
 
           if (boardstate.occupancies[!side].get_bit (dest_square))
             pseudo_moves.push_back (Move (source_square, dest_square, rook, 0, Move::capture_flag));
@@ -309,16 +310,16 @@ Board::get_pseudo_moves (void) const
         }
     }
 
-  int queen = Chess::piece_list_table[side][Chess::queen];
+  const unsigned int queen = Chess::piece_list_table[side][Chess::queen];
   for (Bitboard queen_bitboard = boardstate.bitboards[queen]; queen_bitboard; queen_bitboard.clear_least_significant_set_bit ())
     {
-      int source_square = queen_bitboard.get_index_of_least_significant_set_bit ();
+      const unsigned int source_square = queen_bitboard.get_index_of_least_significant_set_bit ();
 
       // knight attacks empty or enemy occupied squares
       for (Bitboard queen_attack = attacks.queen_attacks (boardstate.occupancies[Chess::both_sides], source_square) & ~boardstate.occupancies[side]; queen_attack;
            queen_attack.clear_least_significant_set_bit ())
         {
-          int dest_square = queen_attack.get_index_of_least_significant_set_bit ();
+          const unsigned int dest_square = queen_attack.get_index_of_least_significant_set_bit ();
 
           if (boardstate.occupancies[!side].get_bit (dest_square))
             pseudo_moves.push_back (Move (source_square, dest_square, queen, 0, Move::capture_flag));
@@ -329,3 +330,132 @@ Board::get_pseudo_moves (void) const
 
   return pseudo_moves;
 }
+
+void
+Board::save_board_state (void)
+{
+  repeated_position[boardstate.position_key & (repeated_position_size - 1)] = true;
+  boardstate_history.push_back_stack (boardstate);
+}
+
+// bool
+// Board::make_pseudo_move (Move move)
+// {
+//   save_board_state ();
+//
+//   int side = boardstate.side_to_move;
+//
+//   int source_square = move.get_source ();
+//   int dest_square = move.get_dest ();
+//   int moving_piece = move.get_moved_piece ();
+//
+//   boardstate.bitboards[moving_piece].invert_bit (source_square);
+//   boardstate.bitboards[moving_piece].invert_bit (dest_square);
+//   boardstate.occupancies[side].invert_bit (source_square);
+//   boardstate.occupancies[side].invert_bit (dest_square);
+//   boardstate.hash_piece (moving_piece, source_square);
+//   boardstate.hash_piece (moving_piece, dest_square);
+//
+//   if (move.is_castling ())
+//     {
+//       int captured_piece = GetCapturedPiece (move);
+//       boardstate.bitboards[captured_piece].invert_bit (dest_square);
+//       boardstate.occupancies[!side].invert_bit (dest_square);
+//       boardstate.hash_piece (captured_piece, dest_square);
+//     }
+//
+//   int promoted_piece_type = move.get_promoted_piece_type ();
+//   if (promoted_piece_type)
+//     {
+//       int promoted_piece = Chess::piece_list_table[side][promoted_piece_type];
+//       boardstate.bitboards[moving_piece].invert_bit (dest_square);
+//       boardstate.bitboards[promoted_piece].invert_bit (dest_square);
+//       boardstate.hash_piece (moving_piece, dest_square);
+//       boardstate.hash_piece (promoted_piece, dest_square);
+//     }
+//
+//   if (move.is_enpassant ())
+//     {
+//       int captured_pawn = Chess::piece_list_table[!side][Chess::pawn];
+//       int captured_pawn_square = (side == Chess::white ? dest_square + 8 : dest_square - 8);
+//
+//       boardstate.bitboards[captured_pawn].invert_bit (captured_pawn_square);
+//       boardstate.occupancies[!side].invert_bit (captured_pawn_square);
+//       boardstate.hash_piece (captured_pawn, captured_pawn_square);
+//     }
+//
+//   // unhash the old enpassant square
+//   if (boardstate.enpassant_square != Chess::forbidden_square)
+//     boardstate.hash_enpassant (boardstate.enpassant_square);
+//
+//   if (move.is_double_push ())
+//     {
+//       boardstate.enpassant_square = (side == Chess::white ? source_square - 8 : source_square + 8);
+//       boardstate.hash_enpassant (boardstate.enpassant_square);
+//     }
+//   else
+//     boardstate.enpassant_square = Chess::forbidden_square;
+//
+//   if (move.is_castling ())
+//     {
+//       int rook = Chess::piece_list_table[side][Chess::rook];
+//       int rook_source = 0, rook_dest = 0;
+//
+//       switch (dest_square)
+//         {
+//         case Chess::g1:
+//           rook_source = Chess::h1;
+//           rook_dest = Chess::f1;
+//           break;
+//         case Chess::c1:
+//           rook_source = Chess::a1;
+//           rook_dest = Chess::d1;
+//           break;
+//         case Chess::g8:
+//           rook_source = Chess::h8;
+//           rook_dest = Chess::f8;
+//           break;
+//         case Chess::c8:
+//           rook_source = Chess::a8;
+//           rook_dest = Chess::d8;
+//           break;
+//         }
+//
+//       // flip bit is cheaper
+//       boardstate.bitboards[rook].invert_bit (rook_source);
+//       boardstate.bitboards[rook].invert_bit (rook_dest);
+//       boardstate.occupancies[side].invert_bit (rook_source);
+//       boardstate.occupancies[side].invert_bit (rook_dest);
+//       boardstate.hash_piece (rook, rook_source);
+//       boardstate.hash_piece (rook, rook_dest);
+//     }
+//
+//   boardstate.hash_castle (boardstate.castle);
+//   boardstate.castle &= castling_permission_filter_table[source_square];
+//   boardstate.castle &= castling_permission_filter_table[dest_square];
+//   boardstate.hash_castle (boardstate.castle);
+//
+//   // update the occupancies
+//   boardstate.occupancies[Chess::both_sides] = boardstate.occupancies[Chess::white] | boardstate.occupancies[Chess::black];
+//
+//   // update fifty moves rule
+//   if (moving_piece == Chess::white_pawn || moving_piece == Chess::black_pawn || move.is_capture () || move.is_enpassant ())
+//     boardstate.fifty_moves = 0;
+//   else
+//     ++boardstate.fifty_moves;
+//
+//   // check for check
+//   bool in_check = is_king_attacked ();
+//
+//   if (in_check)
+//     {
+//       RestoreState ();
+//       return false;
+//     }
+//   else
+//     {
+//       boardstate.side_to_move = boardstate.side_to_move ^ 1;
+//       boardstate.hash_side_to_move ();
+//       return true;
+//     }
+// }
