@@ -39,6 +39,6 @@ Boardstate_Stack::data_stack (void) const
 
 Boardstate_Stack::Boardstate_Stack (size_t init_stack_size)
 {
-  stack = new Boardstate[init_stack_size];
+  stack = new Boardstate[init_stack_size]();
   stack_size = init_stack_size;
 }

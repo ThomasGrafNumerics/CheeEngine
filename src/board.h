@@ -48,5 +48,8 @@ public:
   bool is_king_attacked (void) const;
   std::vector<Move> get_pseudo_moves (void) const;
   void save_board_state (void);
+  void restore_state (void);
+  int get_captured_piece (Move);
+
   bool make_pseudo_move (Move);
 };
