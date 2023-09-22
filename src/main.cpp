@@ -10,17 +10,11 @@ main ()
 {
 
   Board b;
-  b.parseFEN (start_position);
-  b.print_board ();
-  auto m = b.get_pseudo_moves ();
 
-  for (auto &move : m)
+  for (unsigned int square = 0; square < 64; ++square)
     {
-      if (b.make_pseudo_move (move))
-        {
-          b.print_board ();
-          b.restore_state ();
-        }
+      b.attacks.knight_attacks (square).print_bitboard ();
     }
+
   return 0;
 }
