@@ -7,8 +7,17 @@
 #include "magics.h"
 #include "move.h"
 #include "slow_attacks.h"
+#include "timer.h"
 #include "types.h"
 #include <vector>
+
+extern Bitboard copy_bitboards[12];
+extern Bitboard copy_occupancies[3];
+extern bool copy_side_to_move;
+extern unsigned int copy_castle;
+extern unsigned int copy_enpassant_square;
+extern unsigned int copy_fifty_moves;
+extern uint64_t copy_position_key;
 
 class Board
 {
@@ -26,7 +35,8 @@ private:
 public:
   Boardstate boardstate;
   Boardstate_Stack boardstate_history;
-  unsigned int visited_nodes;
+  // Boardstate boardstate_copy;
+  unsigned long long visited_nodes;
   int pv_length[max_searching_depth];
   Move pv_table[max_searching_depth][max_searching_depth]; // searching depth, move index
   Move killer_heuristic[max_searching_depth][2];
@@ -50,6 +60,7 @@ public:
   void save_board_state (void);
   void restore_state (void);
   int get_captured_piece (Move);
-
   bool make_pseudo_move (Move);
+  void perf_test (int);
+  void parse_perf_test (const std::string &);
 };

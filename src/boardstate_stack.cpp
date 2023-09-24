@@ -6,7 +6,6 @@ Boardstate_Stack::is_stack_empty (void)
   return stack_size == 0;
 }
 
-// ganz schlimm und falsch
 void
 Boardstate_Stack::push_back_stack (const Boardstate &new_boardstate)
 {

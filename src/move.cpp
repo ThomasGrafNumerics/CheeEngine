@@ -61,7 +61,7 @@ Move::clear ()
 void
 Move::print_move () const
 {
-  std::cout << square_to_string_table[get_source ()] << square_to_string_table[get_dest ()];
+  std::cout << square_to_string_table[get_source ()] << square_to_string_table[get_dest ()] << "flag :" << move;
   int promoted_piece = get_promoted_piece_type ();
   if (promoted_piece)
     std::cout << Chess::piece_to_fen (promoted_piece);

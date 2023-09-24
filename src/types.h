@@ -28,10 +28,9 @@ constexpr uint64_t rank_2_mask{ 71776119061217280 };
 
 // some mnemonics
 // uncomment for light-mode terminal background
-constexpr std::array<const char *, 12> unicode_symbols = { "♙", "♘", "♗", "♖", "♕", "♔", "♟︎", "♞", "♝", "♜", "♛", "♚" };
+// constexpr std::array<const char *, 12> unicode_symbols = { "♙", "♘", "♗", "♖", "♕", "♔", "♟︎", "♞", "♝", "♜", "♛", "♚" };
 // uncomment for dark-mode terminal background
-// constexpr std::array<const char *, 12> unicode_symbols
-//     = { "♟︎", "♞", "♝", "♜", "♛", "♚", "♙", "♘", "♗", "♖", "♕", "♔" };
+constexpr std::array<const char *, 12> unicode_symbols = { "♟︎", "♞", "♝", "♜", "♛", "♚", "♙", "♘", "♗", "♖", "♕", "♔" };
 
 // clang-format off
 constexpr std::array<const char*, 64> square_to_string_table =

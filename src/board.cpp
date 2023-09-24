@@ -1,9 +1,11 @@
 #include "board.h"
 #include "boardstate.h"
 #include "types.h"
+#include <algorithm>
+#include <iterator>
 
 Board::Board ()
-    : boardstate{}, boardstate_history{ boardstate_stack_size }, visited_nodes{ 0 }, pv_length{}, pv_table{}, killer_heuristic{},
+    : boardstate (), boardstate_history (boardstate_stack_size), visited_nodes{ 0 }, pv_length{}, pv_table{}, killer_heuristic{},
       repeated_position{ new bool[repeated_position_size] }
 {
   parseFEN ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -51,6 +53,7 @@ void
 Board::parseFEN (const std::string &fen)
 {
   boardstate.clear_boardstate ();
+  boardstate_history.clear_stack ();
   visited_nodes = 0;
   auto iter = fen.begin ();
   for (unsigned int square = 0; square < 64;)
@@ -331,24 +334,30 @@ Board::get_pseudo_moves (void) const
   return pseudo_moves;
 }
 
-// void
-// Board::save_board_state (void)
-// {
-//   repeated_position[boardstate.position_key & (repeated_position_size - 1)] = true;
-//   boardstate_history.push_back_stack (boardstate);
-// }
-//
-// void
-// Board::restore_state ()
-// {
-//   boardstate = boardstate_history.back_stack ();
-//   boardstate_history.pop_back_stack ();
-//   repeated_position[boardstate.position_key & (repeated_position_size - 1)] = false;
-// }
+// insane bottle neck
+void
+Board::save_board_state (void)
+{
+  repeated_position[boardstate.position_key & (repeated_position_size - 1)] = true;
+  boardstate_history.push_back_stack (boardstate);
+  // boardstate_copy = boardstate;
+  // std::copy (std::begin (boardstate.bitboards), std::end (boardstate.bitboards), std::begin (copy_bitboards));
+}
+
+// insane bottle neck
+void
+Board::restore_state ()
+{
+  // boardstate = boardstate_copy;
+  boardstate = boardstate_history.back_stack ();
+  boardstate_history.pop_back_stack ();
+  repeated_position[boardstate.position_key & (repeated_position_size - 1)] = false;
+}
 
 int
 Board::get_captured_piece (Move move)
 {
+
   int moved_piece = move.get_moved_piece ();
   int side = Chess::piece_side_table[moved_piece];
   int dest_square = move.get_dest ();
@@ -356,130 +365,187 @@ Board::get_captured_piece (Move move)
   for (unsigned int captured_piece = Chess::piece_list_table[!side][Chess::pawn]; captured_piece <= Chess::piece_list_table[!side][Chess::queen]; ++captured_piece)
     {
       if (boardstate.bitboards[captured_piece].get_bit (dest_square))
-        return captured_piece;
+        {
+
+          return captured_piece;
+        }
     }
 
+  std::cout << "WARNING: " << std::endl;
   return -1;
 }
 
-// bool
-// Board::make_pseudo_move (Move move)
-// {
-//   save_board_state ();
-//
-//   int side = boardstate.side_to_move;
-//
-//   int source_square = move.get_source ();
-//   int dest_square = move.get_dest ();
-//   int moving_piece = move.get_moved_piece ();
-//
-//   boardstate.bitboards[moving_piece].invert_bit (source_square);
-//   boardstate.bitboards[moving_piece].invert_bit (dest_square);
-//   boardstate.occupancies[side].invert_bit (source_square);
-//   boardstate.occupancies[side].invert_bit (dest_square);
-//   boardstate.hash_piece (moving_piece, source_square);
-//   boardstate.hash_piece (moving_piece, dest_square);
-//
-//   if (move.is_castling ())
-//     {
-//       int captured_piece = get_captured_piece (move);
-//       boardstate.bitboards[captured_piece].invert_bit (dest_square);
-//       boardstate.occupancies[!side].invert_bit (dest_square);
-//       boardstate.hash_piece (captured_piece, dest_square);
-//     }
-//
-//   int promoted_piece_type = move.get_promoted_piece_type ();
-//   if (promoted_piece_type)
-//     {
-//       int promoted_piece = Chess::piece_list_table[side][promoted_piece_type];
-//       boardstate.bitboards[moving_piece].invert_bit (dest_square);
-//       boardstate.bitboards[promoted_piece].invert_bit (dest_square);
-//       boardstate.hash_piece (moving_piece, dest_square);
-//       boardstate.hash_piece (promoted_piece, dest_square);
-//     }
-//
-//   if (move.is_enpassant ())
-//     {
-//       int captured_pawn = Chess::piece_list_table[!side][Chess::pawn];
-//       int captured_pawn_square = (side == Chess::white ? dest_square + 8 : dest_square - 8);
-//
-//       boardstate.bitboards[captured_pawn].invert_bit (captured_pawn_square);
-//       boardstate.occupancies[!side].invert_bit (captured_pawn_square);
-//       boardstate.hash_piece (captured_pawn, captured_pawn_square);
-//     }
-//
-//   // unhash the old enpassant square
-//   if (boardstate.enpassant_square != Chess::forbidden_square)
-//     boardstate.hash_enpassant (boardstate.enpassant_square);
-//
-//   if (move.is_double_push ())
-//     {
-//       boardstate.enpassant_square = (side == Chess::white ? source_square - 8 : source_square + 8);
-//       boardstate.hash_enpassant (boardstate.enpassant_square);
-//     }
-//   else
-//     boardstate.enpassant_square = Chess::forbidden_square;
-//
-//   if (move.is_castling ())
-//     {
-//       int rook = Chess::piece_list_table[side][Chess::rook];
-//       int rook_source = 0, rook_dest = 0;
-//
-//       switch (dest_square)
-//         {
-//         case Chess::g1:
-//           rook_source = Chess::h1;
-//           rook_dest = Chess::f1;
-//           break;
-//         case Chess::c1:
-//           rook_source = Chess::a1;
-//           rook_dest = Chess::d1;
-//           break;
-//         case Chess::g8:
-//           rook_source = Chess::h8;
-//           rook_dest = Chess::f8;
-//           break;
-//         case Chess::c8:
-//           rook_source = Chess::a8;
-//           rook_dest = Chess::d8;
-//           break;
-//         }
-//
-//       // flip bit is cheaper
-//       boardstate.bitboards[rook].invert_bit (rook_source);
-//       boardstate.bitboards[rook].invert_bit (rook_dest);
-//       boardstate.occupancies[side].invert_bit (rook_source);
-//       boardstate.occupancies[side].invert_bit (rook_dest);
-//       boardstate.hash_piece (rook, rook_source);
-//       boardstate.hash_piece (rook, rook_dest);
-//     }
-//
-//   boardstate.hash_castle (boardstate.castle);
-//   boardstate.castle &= castling_permission_filter_table[source_square];
-//   boardstate.castle &= castling_permission_filter_table[dest_square];
-//   boardstate.hash_castle (boardstate.castle);
-//
-//   // update the occupancies
-//   boardstate.occupancies[Chess::both_sides] = boardstate.occupancies[Chess::white] | boardstate.occupancies[Chess::black];
-//
-//   // update fifty moves rule
-//   if (moving_piece == Chess::white_pawn || moving_piece == Chess::black_pawn || move.is_capture () || move.is_enpassant ())
-//     boardstate.fifty_moves = 0;
-//   else
-//     ++boardstate.fifty_moves;
-//
-//   // check for check
-//   bool in_check = is_king_attacked ();
-//
-//   if (in_check)
-//     {
-//       restore_state ();
-//       return false;
-//     }
-//   else
-//     {
-//       boardstate.side_to_move = boardstate.side_to_move ^ 1;
-//       boardstate.hash_side_to_move ();
-//       return true;
-//     }
-// }
+bool
+Board::make_pseudo_move (Move move)
+{
+  save_board_state ();
+
+  int side = boardstate.side_to_move;
+
+  int source_square = move.get_source ();
+  int dest_square = move.get_dest ();
+  int moving_piece = move.get_moved_piece ();
+
+  boardstate.bitboards[moving_piece].invert_bit (source_square);
+  boardstate.bitboards[moving_piece].invert_bit (dest_square);
+  boardstate.occupancies[side].invert_bit (source_square);
+  boardstate.occupancies[side].invert_bit (dest_square);
+  // boardstate.hash_piece (moving_piece, source_square);
+  // boardstate.hash_piece (moving_piece, dest_square);
+
+  if (move.is_capture ())
+    {
+
+      int captured_piece = get_captured_piece (move);
+      boardstate.bitboards[captured_piece].invert_bit (dest_square);
+      boardstate.occupancies[!side].invert_bit (dest_square);
+      // boardstate.hash_piece (captured_piece, dest_square);
+    }
+
+  int promoted_piece_type = move.get_promoted_piece_type ();
+  if (promoted_piece_type)
+    {
+      int promoted_piece = Chess::piece_list_table[side][promoted_piece_type];
+      boardstate.bitboards[moving_piece].invert_bit (dest_square);
+      boardstate.bitboards[promoted_piece].invert_bit (dest_square);
+      // boardstate.hash_piece (moving_piece, dest_square);
+      // boardstate.hash_piece (promoted_piece, dest_square);
+    }
+
+  if (move.is_enpassant ())
+    {
+      int captured_pawn = Chess::piece_list_table[!side][Chess::pawn];
+      int captured_pawn_square = (side == Chess::white ? dest_square + 8 : dest_square - 8);
+
+      boardstate.bitboards[captured_pawn].invert_bit (captured_pawn_square);
+      boardstate.occupancies[!side].invert_bit (captured_pawn_square);
+      // boardstate.hash_piece (captured_pawn, captured_pawn_square);
+    }
+
+  // unhash the old enpassant square
+  if (boardstate.enpassant_square != Chess::forbidden_square)
+    {
+      // boardstate.hash_enpassant (boardstate.enpassant_square);
+    }
+
+  if (move.is_double_push ())
+    {
+      boardstate.enpassant_square = (side == Chess::white ? source_square - 8 : source_square + 8);
+      // boardstate.hash_enpassant (boardstate.enpassant_square);
+    }
+  else
+    {
+      boardstate.enpassant_square = Chess::forbidden_square;
+    }
+
+  if (move.is_castling ())
+    {
+      int rook = Chess::piece_list_table[side][Chess::rook];
+      int rook_source = 0, rook_dest = 0;
+
+      switch (dest_square)
+        {
+        case Chess::g1:
+          rook_source = Chess::h1;
+          rook_dest = Chess::f1;
+          break;
+        case Chess::c1:
+          rook_source = Chess::a1;
+          rook_dest = Chess::d1;
+          break;
+        case Chess::g8:
+          rook_source = Chess::h8;
+          rook_dest = Chess::f8;
+          break;
+        case Chess::c8:
+          rook_source = Chess::a8;
+          rook_dest = Chess::d8;
+          break;
+        }
+
+      // flip bit is cheaper
+      boardstate.bitboards[rook].invert_bit (rook_source);
+      boardstate.bitboards[rook].invert_bit (rook_dest);
+      boardstate.occupancies[side].invert_bit (rook_source);
+      boardstate.occupancies[side].invert_bit (rook_dest);
+      // boardstate.hash_piece (rook, rook_source);
+      // boardstate.hash_piece (rook, rook_dest);
+    }
+
+  // boardstate.hash_castle (boardstate.castle);
+  boardstate.castle &= castling_permission_filter_table[source_square];
+  boardstate.castle &= castling_permission_filter_table[dest_square];
+  // boardstate.hash_castle (boardstate.castle);
+
+  // update the occupancies
+  boardstate.occupancies[Chess::both_sides] = boardstate.occupancies[Chess::white] | boardstate.occupancies[Chess::black];
+
+  // update fifty moves rule
+  if (moving_piece == Chess::white_pawn || moving_piece == Chess::black_pawn || move.is_capture () || move.is_enpassant ())
+    boardstate.fifty_moves = 0;
+  else
+    ++boardstate.fifty_moves;
+
+  // check for check
+  bool in_check = is_king_attacked ();
+
+  if (in_check)
+    {
+      restore_state ();
+      return false;
+    }
+  else
+    {
+      boardstate.side_to_move = boardstate.side_to_move ^ 1;
+      // boardstate.hash_side_to_move ();
+      return true;
+    }
+}
+
+void
+Board::perf_test (int depth)
+{
+  if (depth == 0)
+    {
+      ++visited_nodes;
+      return;
+    }
+
+  std::vector<Move> pseudo_moves = get_pseudo_moves ();
+
+  for (Move move : pseudo_moves)
+    {
+      // save_board_state ();
+      // std::cout << "BEFORE" << std::endl;
+      // this->print_board ();
+      if (make_pseudo_move (move))
+        {
+          // move.print_move ();
+          // std::cout << std::endl;
+          // this->print_board ();
+          perf_test (depth - 1);
+          restore_state ();
+        }
+    }
+
+  return;
+}
+
+void
+Board::parse_perf_test (const std::string &perf_str)
+{
+  size_t index = perf_str.find ("depth") + 6;
+  if (index < std::string::npos)
+    {
+      visited_nodes = 0;
+      int max_depth = stoi (perf_str.substr (index));
+
+      std::chrono::high_resolution_clock::time_point timer = std::chrono::high_resolution_clock::now ();
+      perf_test (max_depth);
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::high_resolution_clock::now () - timer);
+
+      std::cout << "Node: " << visited_nodes << '\n';
+      std::cout << "Time: " << duration.count () << " ms\n";
+      std::cout << "Speed: " << visited_nodes / duration.count () << " knode/s" << std::endl;
+    }
+}
