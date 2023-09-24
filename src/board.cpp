@@ -3,6 +3,7 @@
 #include "types.h"
 #include <algorithm>
 #include <iterator>
+#include <string>
 
 Board::Board ()
     : boardstate (), boardstate_history (boardstate_stack_size), visited_nodes{ 0 }, pv_length{}, pv_table{}, killer_heuristic{},
@@ -390,8 +391,8 @@ Board::make_pseudo_move (Move move)
   boardstate.bitboards[moving_piece].invert_bit (dest_square);
   boardstate.occupancies[side].invert_bit (source_square);
   boardstate.occupancies[side].invert_bit (dest_square);
-  // boardstate.hash_piece (moving_piece, source_square);
-  // boardstate.hash_piece (moving_piece, dest_square);
+  boardstate.hash_piece (moving_piece, source_square);
+  boardstate.hash_piece (moving_piece, dest_square);
 
   if (move.is_capture ())
     {
@@ -399,7 +400,7 @@ Board::make_pseudo_move (Move move)
       int captured_piece = get_captured_piece (move);
       boardstate.bitboards[captured_piece].invert_bit (dest_square);
       boardstate.occupancies[!side].invert_bit (dest_square);
-      // boardstate.hash_piece (captured_piece, dest_square);
+      boardstate.hash_piece (captured_piece, dest_square);
     }
 
   int promoted_piece_type = move.get_promoted_piece_type ();
@@ -408,8 +409,8 @@ Board::make_pseudo_move (Move move)
       int promoted_piece = Chess::piece_list_table[side][promoted_piece_type];
       boardstate.bitboards[moving_piece].invert_bit (dest_square);
       boardstate.bitboards[promoted_piece].invert_bit (dest_square);
-      // boardstate.hash_piece (moving_piece, dest_square);
-      // boardstate.hash_piece (promoted_piece, dest_square);
+      boardstate.hash_piece (moving_piece, dest_square);
+      boardstate.hash_piece (promoted_piece, dest_square);
     }
 
   if (move.is_enpassant ())
@@ -419,19 +420,19 @@ Board::make_pseudo_move (Move move)
 
       boardstate.bitboards[captured_pawn].invert_bit (captured_pawn_square);
       boardstate.occupancies[!side].invert_bit (captured_pawn_square);
-      // boardstate.hash_piece (captured_pawn, captured_pawn_square);
+      boardstate.hash_piece (captured_pawn, captured_pawn_square);
     }
 
   // unhash the old enpassant square
   if (boardstate.enpassant_square != Chess::forbidden_square)
     {
-      // boardstate.hash_enpassant (boardstate.enpassant_square);
+      boardstate.hash_enpassant (boardstate.enpassant_square);
     }
 
   if (move.is_double_push ())
     {
       boardstate.enpassant_square = (side == Chess::white ? source_square - 8 : source_square + 8);
-      // boardstate.hash_enpassant (boardstate.enpassant_square);
+      boardstate.hash_enpassant (boardstate.enpassant_square);
     }
   else
     {
@@ -468,14 +469,14 @@ Board::make_pseudo_move (Move move)
       boardstate.bitboards[rook].invert_bit (rook_dest);
       boardstate.occupancies[side].invert_bit (rook_source);
       boardstate.occupancies[side].invert_bit (rook_dest);
-      // boardstate.hash_piece (rook, rook_source);
-      // boardstate.hash_piece (rook, rook_dest);
+      boardstate.hash_piece (rook, rook_source);
+      boardstate.hash_piece (rook, rook_dest);
     }
 
-  // boardstate.hash_castle (boardstate.castle);
+  boardstate.hash_castle (boardstate.castle);
   boardstate.castle &= castling_permission_filter_table[source_square];
   boardstate.castle &= castling_permission_filter_table[dest_square];
-  // boardstate.hash_castle (boardstate.castle);
+  boardstate.hash_castle (boardstate.castle);
 
   // update the occupancies
   boardstate.occupancies[Chess::both_sides] = boardstate.occupancies[Chess::white] | boardstate.occupancies[Chess::black];
@@ -497,7 +498,7 @@ Board::make_pseudo_move (Move move)
   else
     {
       boardstate.side_to_move = boardstate.side_to_move ^ 1;
-      // boardstate.hash_side_to_move ();
+      boardstate.hash_side_to_move ();
       return true;
     }
 }
@@ -548,4 +549,36 @@ Board::parse_perf_test (const std::string &perf_str)
       std::cout << "Time: " << duration.count () << " ms\n";
       std::cout << "Speed: " << visited_nodes / duration.count () << " knode/s" << std::endl;
     }
+}
+
+bool
+Board::parse_move (const std::string &move_str)
+{
+  if (move_str.size () < 4)
+    return false;
+
+  int source_file = to_file (move_str[0]);
+  int source_rank = to_rank (move_str[1]);
+  int dest_file = to_file (move_str[2]);
+  int dest_rank = to_rank (move_str[3]);
+  int promoted_piece_type = 0;
+  if (move_str.size () >= 5)
+    promoted_piece_type = Chess::fen_to_piece_type (move_str[4]);
+
+  int source_square = source_rank * 8 + source_file;
+  int dest_square = dest_rank * 8 + dest_file;
+
+  std::vector<Move> pseudo_moves = get_pseudo_moves ();
+  for (Move pseudo_move : pseudo_moves)
+    {
+      if (pseudo_move.get_source () == source_square && pseudo_move.get_dest () == dest_square && pseudo_move.get_promoted_piece_type () == promoted_piece_type)
+        {
+          if (make_pseudo_move (pseudo_move))
+            return true;
+          else
+            return false;
+        }
+    }
+
+  return false;
 }

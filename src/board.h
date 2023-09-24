@@ -63,4 +63,5 @@ public:
   bool make_pseudo_move (Move);
   void perf_test (int);
   void parse_perf_test (const std::string &);
+  bool parse_move (const std::string &);
 };
