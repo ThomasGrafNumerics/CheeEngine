@@ -9,18 +9,21 @@
 int
 main ()
 {
+  // Bitboard b{ not_a_file_mask };
+  //
+  // b.print_bitboard ();
   Board b;
   const std::string postion{ "rnbqkbnr / pppppppp / 8 / 8 / 8 / 8 / PPPPPPPP / RNBQKBNR w KQkq - 0 1" };
-  b.parseFEN (postion);
+  b.parseFEN (tricky_position);
 
-  // for (unsigned int depth = 1; depth <= 7; ++depth)
-  //   {
-  b.visited_nodes = 0;
+  for (unsigned int depth = 1; depth <= 4; ++depth)
+    {
+      b.visited_nodes = 0;
 
-  b.perf_test (6);
+      b.perf_test (depth);
 
-  std::cout << b.visited_nodes << std::endl;
-  // }
+      std::cout << b.visited_nodes << std::endl;
+    }
 
   return 0;
 }

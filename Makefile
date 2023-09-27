@@ -21,8 +21,12 @@ all: debug
 debug: CXXFLAGS += -g
 debug: $(TARGET_EXEC)
 
-release: CPPFLAGS += -O3
+release: CXXFLAGS += -O3
 release: $(TARGET_EXEC)
+
+profile: CXXFLAGS += -pg
+profile: CXXFLAGS += -O3
+profile: $(TARGET_EXEC)
 
 GREEN=`tput setaf 034`
 RED=`tput setaf 160`
@@ -70,7 +74,7 @@ CPPFLAGS := $(INC_FLAGS) -MMD -MP
 # the final build step
 $(TARGET_EXEC): $(OBJS)
 	$(call print_green,"Linking object files ...")
-	@$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+	@$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS)
 	$(call print_green,"$(TARGET_EXEC) has been created successfully!")
 
 # build step for C++ source

@@ -582,3 +582,93 @@ Board::parse_move (const std::string &move_str)
 
   return false;
 }
+
+void
+Board::parse_position (const std::string &position_str)
+{
+  size_t index = 9;
+
+  if (position_str.substr (index, 8) == "startpos")
+    {
+      index += 9;
+      parseFEN ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    }
+  else if (position_str.substr (index, 8) == "kiwipete")
+    {
+      index += 9;
+      parseFEN ("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+    }
+  else if (position_str.substr (index, 7) == "DTZ1033")
+    {
+      index += 8;
+      parseFEN ("8/r6n/8/8/5k2/3K4/7N/3b3Q b - - 0 0");
+    }
+  else if (position_str.substr (index, 7) == "endgame")
+    {
+      index += 8;
+      parseFEN ("8/P7/8/8/8/4k3/1K6/8 w - - 1 5");
+    }
+  else if (position_str.substr (index, 3) == "fen")
+    {
+      index += 4;
+      parseFEN (position_str.substr (index));
+    }
+
+  if (index < position_str.size ())
+    {
+      // 4 bytes assembly level KMP
+      // index = strstr(position_str.c_str(), "move") - position_str.c_str();
+      index = position_str.find ("moves");
+      if (index != std::string::npos)
+        {
+          index += 5;
+          while (index != std::string::npos)
+            {
+              ++index;
+              bool parsed_success = parse_move (position_str.substr (index));
+
+              if (parsed_success)
+                index = position_str.find (" ", index);
+              else
+                break;
+            }
+        }
+    }
+}
+
+void
+Board::UCI ()
+{
+  std::ios_base::sync_with_stdio (false);
+
+  std::string command;
+  while (true)
+    {
+      getline (std::cin, command);
+      if (command == "uci")
+        {
+          std::cout << "id name LeeChess\n";
+          std::cout << "uciok" << std::endl;
+        }
+      else if (command.find ("isready") != std::string::npos)
+        std::cout << "readyok" << std::endl;
+      else if (command.find ("position") != std::string::npos)
+        parse_position (command);
+      else if (command.find ("ucinewgame") != std::string::npos)
+        parse_position ("position startpos");
+      else if (command.find ("perft") != std::string::npos)
+        parse_perf_test (command);
+      // else if (command.find ("go") != std::string::npos)
+      //   parse_go (command);
+      else if (command.find ("takeback") != std::string::npos)
+        restore_state ();
+      // else if (command.find ("train") != std::string::npos)
+      //   parse_train (command);
+      else if (command.find ("quit") != std::string::npos)
+        break;
+      else
+        std::cout << "Invaild command\a\n";
+
+      print_board ();
+    }
+}

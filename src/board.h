@@ -11,14 +11,6 @@
 #include "types.h"
 #include <vector>
 
-extern Bitboard copy_bitboards[12];
-extern Bitboard copy_occupancies[3];
-extern bool copy_side_to_move;
-extern unsigned int copy_castle;
-extern unsigned int copy_enpassant_square;
-extern unsigned int copy_fifty_moves;
-extern uint64_t copy_position_key;
-
 class Board
 {
 private:
@@ -64,4 +56,6 @@ public:
   void perf_test (int);
   void parse_perf_test (const std::string &);
   bool parse_move (const std::string &);
+  void parse_position (const std::string &);
+  void UCI (void);
 };
