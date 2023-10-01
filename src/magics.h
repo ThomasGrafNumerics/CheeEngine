@@ -64,6 +64,7 @@ public:
   Bitboard precomputed_rook_attacks_hash_table[64][4096];
   Bitboard precomputed_bishop_attacks_hash_table[64][512];
 
+  // clang-format off
   constexpr static uint64_t precomputed_rook_magics[64]
       = { 0x8a80104000800020_uint64, 0x140002000100040_uint64,  0x2801880a0017001_uint64,  0x100081001000420_uint64,  0x200020010080420_uint64,
           0x3001c0002010008_uint64,  0x8480008002000100_uint64, 0x2080088004402900_uint64, 0x800098204000_uint64,     0x2024401000200040_uint64,
@@ -93,6 +94,6 @@ public:
           0x4000020e01040044_uint64, 0x300000261044000a_uint64, 0x802241102020002_uint64,  0x20906061210001_uint64,   0x5a84841004010310_uint64,
           0x4010801011c04_uint64,    0xa010109502200_uint64,    0x4a02012000_uint64,       0x500201010098b028_uint64, 0x8040002811040900_uint64,
           0x28000010020204_uint64,   0x6000020202d0240_uint64,  0x8918844842082200_uint64, 0x4010011029020020_uint64 };
-
+  // clang-format on
 private:
 };

@@ -13,10 +13,10 @@ main ()
   //
   // b.print_bitboard ();
   Board b;
-  const std::string postion{ "rnbqkbnr / pppppppp / 8 / 8 / 8 / 8 / PPPPPPPP / RNBQKBNR w KQkq - 0 1" };
-  b.parseFEN (tricky_position);
+  // const std::string postion{ "rnbqkbnr / pppppppp / 8 / 8 / 8 / 8 / PPPPPPPP / RNBQKBNR w KQkq - 0 1" };
+  b.parseFEN (start_position);
 
-  for (unsigned int depth = 1; depth <= 4; ++depth)
+  for (unsigned int depth = 1; depth <= 5; ++depth)
     {
       b.visited_nodes = 0;
 

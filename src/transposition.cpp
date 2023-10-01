@@ -5,10 +5,10 @@
 void
 Transposition::Clear ()
 {
-  this->position_key = 0;
-  this->depth_searched_beyond = 0;
-  this->score = SCORE_EMPTY;
-  this->hash_flag = HASH_FLAG_EMPTY;
+  position_key = 0;
+  depth_searched_beyond = 0;
+  score = SCORE_EMPTY;
+  hash_flag = HASH_FLAG_EMPTY;
 }
 
 Transposition::Transposition () : position_key (0), depth_searched_beyond (0), score (SCORE_EMPTY), hash_flag (HASH_FLAG_EMPTY) {}
