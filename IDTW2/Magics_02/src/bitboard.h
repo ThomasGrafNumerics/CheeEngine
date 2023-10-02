@@ -16,7 +16,7 @@ public:
   Bitboard (const Bitboard &);
 
   //  move constructor
-  Bitboard (Bitboard &&) = default;
+  // Bitboard (Bitboard &&) = delete;
 
   // copy assignment
   Bitboard &operator= (const Bitboard &);
